@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Metasebiya Mulugeta — Portfolio",
     description: "Lead Software Engineer | Backend, Data Pipelines, ML",
-    url: "https://your-domain.vercel.app",
+    url: "https://metasebiya.vercel.app/",
     siteName: "Metasebiya Portfolio",
     locale: "en_US",
     type: "website",

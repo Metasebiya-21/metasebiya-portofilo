@@ -6,7 +6,7 @@ export const profile = {
   location: "Addis Ababa, Ethiopia",
   email: "metasebiya42@gmail.com",
   linkedin: "https://www.linkedin.com/in/metasebiya21",
-  github: "https://github.com/your-username", // change me
+  github: "https://github.com/Metasebiya-21", 
   summary: `Software Engineer with 5+ years building scalable backend systems, data pipelines, and ML applications. Lead Software Engineer at Kifiya, previously core engineer on MICHU.`,
   highlights: [
     "Led Onboarding & Verification Platform (offline-first sync, robust KYC).",
