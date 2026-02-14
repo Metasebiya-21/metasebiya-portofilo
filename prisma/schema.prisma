@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id          Int      @id
+  name        String
+  brandName   String
+  role        String
+  headline    String
+  location    String
+  email       String
+  linkedin    String
+  github      String?
+  website     String?
+  contactIntro String
+  summary     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  passwordSalt String
+  isSuperAdmin Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Experience {
+  id        Int      @id @default(autoincrement())
+  title     String
+  role      String
+  period    String
+  bullets   Json
+  visibleToPublic Boolean @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  techStackLinks ExperienceTech[]
+}
+
+model Project {
+  id        Int      @id @default(autoincrement())
+  title     String   @unique
+  categoryId Int
+  summary   String
+  description String?
+  images    Json?
+  link      String?
+  visibleToPublic Boolean @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category       Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  clicks         ProjectClick[]
+  techStackLinks ProjectTech[]
+}
+
+model ChatSession {
+  id        String        @id
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  role      String
+  content   String
+  createdAt DateTime    @default(now())
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+}
+
+model VisitorEvent {
+  id        String   @id @default(cuid())
+  sessionId String
+  path      String
+  ip        String?
+  country   String?
+  city      String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path])
+  @@index([country])
+}
+
+model ProjectClick {
+  id           String   @id @default(cuid())
+  projectId    Int?
+  projectTitle String
+  projectLink  String?
+  sessionId    String
+  ip           String?
+  country      String?
+  createdAt    DateTime @default(now())
+  project      Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([projectTitle])
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects  Project[]
+  techStacks TechStack[]
+}
+
+model TechStack {
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  description  String?
+  howIUseIt    String?
+  technicalUse String?
+  categoryId   Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  category        Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  projectLinks    ProjectTech[]
+  experienceLinks ExperienceTech[]
+}
+
+model ProjectTech {
+  projectId   Int
+  techStackId Int
+  createdAt   DateTime  @default(now())
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  techStack   TechStack @relation(fields: [techStackId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, techStackId])
+  @@index([techStackId])
+}
+
+model ExperienceTech {
+  experienceId Int
+  techStackId  Int
+  createdAt    DateTime  @default(now())
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  techStack    TechStack  @relation(fields: [techStackId], references: [id], onDelete: Cascade)
+
+  @@id([experienceId, techStackId])
+  @@index([techStackId])
+}

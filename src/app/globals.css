@@ -1,26 +1,111 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f8fc;
+  --foreground: #10263d;
+  --surface: #ffffff;
+  --muted: #4a6279;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-manrope);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: #081521;
+  --foreground: #dce9f6;
+  --surface: #0c1e30;
+  --muted: #a8bfd6;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-manrope), "Avenir Next", "Segoe UI", sans-serif;
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(73, 162, 255, 0.2), transparent 28%),
+    radial-gradient(circle at 85% 0%, rgba(16, 185, 129, 0.16), transparent 24%);
+  background-attachment: fixed;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-space-grotesk), "Avenir Next", "Segoe UI", sans-serif;
+  letter-spacing: -0.015em;
+}
+
+main {
+  animation: page-enter 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0.97;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main {
+    animation: none;
+  }
+}
+
+.project-grid > * {
+  animation: card-enter 0.18s ease-out both;
+}
+
+.experience-list > * {
+  animation: card-enter 0.18s ease-out both;
+}
+
+.project-grid > :nth-child(2),
+.experience-list > :nth-child(2) {
+  animation-delay: 0.03s;
+}
+
+.project-grid > :nth-child(3),
+.experience-list > :nth-child(3) {
+  animation-delay: 0.06s;
+}
+
+.project-grid > :nth-child(4),
+.experience-list > :nth-child(4) {
+  animation-delay: 0.09s;
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-grid > *,
+  .experience-list > * {
+    animation: none;
+  }
+}
+
+a,
+button {
+  transition-duration: 140ms;
+  transition-timing-function: ease-out;
 }

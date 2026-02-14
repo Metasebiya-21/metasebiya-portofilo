@@ -3,25 +3,43 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:setup": "node scripts/db-setup.mjs",
+    "db:setup:reset": "node scripts/db-setup.mjs --reset",
+    "db:auto": "/bin/zsh -lc 'npm run admin:generate-session-secret && set -a; source .env.local; set +a; npm run db:setup'",
+    "db:auto:reset": "/bin/zsh -lc 'npm run admin:generate-session-secret && set -a; source .env.local; set +a; npm run db:setup:reset'",
+    "admin:reset-password": "tsx scripts/admin-reset-password.ts",
+    "admin:generate-session-secret": "node scripts/admin-generate-session-secret.mjs"
   },
   "dependencies": {
+    "@langchain/core": "^1.1.24",
+    "@langchain/google-genai": "^2.1.18",
+    "@prisma/client": "^6.16.2",
+    "ioredis": "^5.9.3",
+    "langchain": "^1.2.24",
+    "next": "15.5.3",
+    "prisma": "^6.16.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.3"
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
-    "@eslint/eslintrc": "^3"
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }

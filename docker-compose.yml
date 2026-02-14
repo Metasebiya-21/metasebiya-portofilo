@@ -1,0 +1,110 @@
+services:
+  postgres:
+    image: postgres:16.4-alpine
+    container_name: postgres_portfolio
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=portfolio
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - portfolio-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    command: [
+      "postgres", 
+      "-c", "wal_level=logical", 
+      "-c", "max_wal_senders=10", 
+      "-c", "max_replication_slots=10", 
+      "-c", "shared_preload_libraries=pg_stat_statements"
+    ]
+
+  init-db:
+    image: postgres:16.4-alpine
+    container_name: postgres_init_portfolio
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - PGPASSWORD=postgres
+    command: >
+      sh -c "
+      psql -h postgres -U postgres -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='portfolio'\" | grep -q 1
+      || psql -h postgres -U postgres -d postgres -c \"CREATE DATABASE portfolio\"
+      "
+    networks:
+      - portfolio-network
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: redis
+    restart: always
+    ports:
+      - 6379:6379
+    networks:
+      - portfolio-network
+
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    env_file:
+      - .env.local
+    container_name: portfolio-nextjs
+    working_dir: /app
+    restart: always
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+    ports:
+      - 3000:3000
+    environment:
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/portfolio?schema=public
+      - REDIS_URL=redis://redis:6379
+    command: >
+      sh -c "
+      npm run db:generate &&
+      npx prisma db push --skip-generate &&
+      npm run db:seed &&
+      npm run dev -- --hostname 0.0.0.0
+      "
+    networks:
+      - portfolio-network
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+        - action: sync
+          path: ./public
+          target: /app/public
+        - action: sync+restart
+          path: ./prisma
+          target: /app/prisma
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./package-lock.json
+        - action: rebuild
+          path: ./Dockerfile.dev
+
+networks:
+  portfolio-network:
+    name: portfolio-network
+
+volumes:
+  postgres-data:
+    external: true
+    name: postgres-data
