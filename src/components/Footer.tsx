@@ -41,18 +41,14 @@ export default async function Footer() {
               <i className="fa-brands fa-github" />
             </a>
           )}
-          {profile.resumeUrl && (
-            <a
-              href={profile.resumeUrl}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Resume"
-              title="Resume"
-              className="transition hover:text-sky-600"
-            >
-              <i className="fa-solid fa-file-lines" />
-            </a>
-          )}
+          <a
+            href="/resume"
+            aria-label="Resume"
+            title="Resume"
+            className="transition hover:text-sky-600"
+          >
+            <i className="fa-solid fa-file-lines" />
+          </a>
         </div>
       </div>
     </footer>

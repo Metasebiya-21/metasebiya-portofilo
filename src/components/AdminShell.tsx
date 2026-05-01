@@ -9,6 +9,7 @@ const links = [
   { href: "/admin/categories", label: "Categories" },
   { href: "/admin/skills", label: "Skills" },
   { href: "/admin/projects", label: "Projects" },
+  { href: "/admin/resume-builder", label: "Resume Builder" },
 ];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {

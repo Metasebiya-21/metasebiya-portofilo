@@ -2,6 +2,9 @@
   "name": "metasebiya-portfolio",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "next dev --turbopack",
@@ -21,8 +24,11 @@
   },
   "dependencies": {
     "@langchain/core": "^1.1.24",
-    "@langchain/google-genai": "^2.1.18",
+    "@langchain/google-genai": "^2.1.29",
     "@prisma/client": "^6.16.2",
+    "file-saver": "^2.0.5",
+    "html-docx-js-typescript": "^0.1.5",
+    "html2pdf.js": "^0.14.0",
     "ioredis": "^5.9.3",
     "langchain": "^1.2.24",
     "next": "15.5.3",
@@ -34,6 +40,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

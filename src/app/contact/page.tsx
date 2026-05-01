@@ -55,9 +55,7 @@ export default async function ContactPage() {
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
           <span className="rounded-full border border-slate-300 px-3 py-1 dark:border-slate-700">Open to global opportunities</span>
           <a
-            href={profile.resumeUrl}
-            target="_blank"
-            rel="noreferrer"
+            href="/resume"
             className="rounded-full border border-slate-300 px-3 py-1 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
           >
             Resume
