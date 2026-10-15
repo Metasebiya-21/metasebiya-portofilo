@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProjectById } from "@/lib/portfolio-store";
 import type { Metadata } from "next";
+import { getProjectLinkLabel } from "@/lib/link-label";
 
 function splitCaseStudy(description: string, fallbackSummary: string) {
   const sections = description
@@ -81,7 +82,7 @@ export default async function ProjectDetailPage({
               rel="noreferrer"
               className="mt-4 inline-block text-sm font-medium text-sky-600 hover:underline"
             >
-              Open Git URL
+              {getProjectLinkLabel(project.link)}
             </a>
           )}
           <ul className="mt-4 flex flex-wrap gap-2">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
+import { asStrings, nextSortOrder } from "@/lib/admin-api";
 
 type ProjectBody = {
   id?: number;
@@ -15,9 +16,29 @@ type ProjectBody = {
   visibleToPublic?: boolean;
 };
 
+function parseBody(raw: unknown): ProjectBody | null {
+  if (!raw || typeof raw !== "object") return null;
+  const body = raw as Record<string, unknown>;
+  const title = typeof body.title === "string" ? body.title.trim() : "";
+  const summary = typeof body.summary === "string" ? body.summary.trim() : "";
+  if (!title || !summary) return null;
+  return {
+    id: typeof body.id === "number" ? body.id : undefined,
+    title,
+    summary,
+    category: typeof body.category === "string" ? body.category : "",
+    description: typeof body.description === "string" ? body.description : undefined,
+    images: asStrings(body.images).filter((url) => /^https?:\/\//i.test(url)),
+    tags: asStrings(body.tags),
+    link: typeof body.link === "string" && /^https?:\/\//i.test(body.link.trim()) ? body.link.trim() : undefined,
+    visibleToPublic: typeof body.visibleToPublic === "boolean" ? body.visibleToPublic : undefined,
+  };
+}
+
 export async function POST(request: NextRequest) {
   if (!(await isAdminRequest(request))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const body = (await request.json()) as ProjectBody;
+  const body = parseBody(await request.json().catch(() => null));
+  if (!body) return NextResponse.json({ error: "title and summary are required" }, { status: 400 });
 
   const categoryName = body.category?.trim() || "General";
   const category = await prisma.category.upsert({
@@ -47,7 +68,7 @@ export async function POST(request: NextRequest) {
       images: body.images?.length ? body.images : [],
       link: body.link || null,
       visibleToPublic: body.visibleToPublic ?? true,
-      sortOrder: Date.now(),
+      sortOrder: await nextSortOrder("project"),
       techStackLinks: {
         create: techRows.map((tech) => ({ techStackId: tech.id })),
       },
@@ -59,7 +80,8 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   if (!(await isAdminRequest(request))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const body = (await request.json()) as ProjectBody;
+  const body = parseBody(await request.json().catch(() => null));
+  if (!body) return NextResponse.json({ error: "title and summary are required" }, { status: 400 });
   if (!body.id) return NextResponse.json({ error: "id is required" }, { status: 400 });
 
   const categoryName = body.category?.trim() || "General";

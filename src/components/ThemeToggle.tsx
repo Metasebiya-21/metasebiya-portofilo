@@ -1,37 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Icon from "@/components/Icon";
 
+// Appearance is driven by the `.dark` class (set before paint by the inline
+// script in layout.tsx), so the button never renders the wrong theme first.
 export default function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    setIsDark(document.documentElement.classList.contains("dark"));
-  }, []);
-
   const toggleTheme = () => {
-    const nextIsDark = !isDark;
-    setIsDark(nextIsDark);
+    const nextIsDark = !document.documentElement.classList.contains("dark");
     document.documentElement.classList.toggle("dark", nextIsDark);
-    window.localStorage.setItem("theme", nextIsDark ? "dark" : "light");
+    try {
+      window.localStorage.setItem("theme", nextIsDark ? "dark" : "light");
+    } catch {
+      // Storage can be blocked; the toggle still works for this page view.
+    }
   };
 
   return (
     <button
       type="button"
-      role="switch"
-      aria-checked={isDark}
       onClick={toggleTheme}
-      className={`fixed bottom-6 left-6 z-[60] inline-flex h-11 w-11 items-center justify-center rounded-full border text-lg shadow-sm transition ${
-        isDark
-          ? "border-sky-400 bg-slate-900 text-amber-300 hover:bg-slate-800"
-          : "border-gray-300 bg-white text-slate-700 hover:bg-gray-100"
-      }`}
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      className="fixed bottom-6 left-6 z-[60] inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-300 bg-white text-lg text-slate-700 shadow-sm transition hover:bg-gray-100 dark:border-sky-400 dark:bg-slate-900 dark:text-amber-300 dark:hover:bg-slate-800"
+      aria-label="Toggle dark mode"
+      title="Toggle dark mode"
     >
-      <span className="sr-only">Theme</span>
-      <i className={isDark ? "fa-solid fa-sun" : "fa-solid fa-moon"} />
+      <Icon name="moon" className="inline-block dark:hidden" />
+      <Icon name="sun" className="hidden dark:inline-block" />
     </button>
   );
 }

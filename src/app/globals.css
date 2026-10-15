@@ -2,6 +2,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  color-scheme: light;
   --background: #f5f8fc;
   --foreground: #10263d;
   --surface: #ffffff;
@@ -14,10 +15,10 @@
   --color-surface: var(--surface);
   --color-muted: var(--muted);
   --font-sans: var(--font-manrope);
-  --font-mono: var(--font-geist-mono);
 }
 
 .dark {
+  color-scheme: dark;
   --background: #081521;
   --foreground: #dce9f6;
   --surface: #0c1e30;
@@ -43,17 +44,16 @@ h3 {
 
 main {
   animation: page-enter 0.18s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: opacity, transform;
 }
 
 @keyframes page-enter {
   from {
     opacity: 0.97;
-    transform: translateX(8px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0);
   }
 }
 

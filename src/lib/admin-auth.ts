@@ -7,6 +7,8 @@ import { verifyPassword } from "@/lib/password";
 
 export const ADMIN_COOKIE_NAME = "portfolio_admin_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 12;
+const DUMMY_PASSWORD_HASH = "00".repeat(64);
+const DUMMY_PASSWORD_SALT = "00".repeat(16);
 
 declare global {
   var adminSessionSecret: string | undefined;
@@ -15,6 +17,13 @@ declare global {
 function getAdminSessionSecret() {
   const configured = process.env.ADMIN_SESSION_TOKEN || process.env.ADMIN_SESSION_SECRET;
   if (configured) return configured;
+
+  // Each serverless instance would generate its own secret, so admin sessions must
+  // fail closed in production rather than sign with an ephemeral one.
+  if (process.env.NODE_ENV === "production") {
+    console.error("ADMIN_SESSION_TOKEN/ADMIN_SESSION_SECRET is not set; admin login is disabled.");
+    return null;
+  }
 
   if (!globalThis.adminSessionSecret) {
     globalThis.adminSessionSecret = randomBytes(48).toString("base64url");
@@ -74,14 +83,15 @@ export async function isValidAdminLogin(email: string, password: string) {
   const admin = await prisma.adminUser.findUnique({
     where: { email: normalizedEmail },
   });
-  if (!admin || !admin.isActive || !admin.isSuperAdmin) return null;
 
-  const isValid = await verifyPassword(password, admin.passwordHash, admin.passwordSalt);
-  return isValid ? admin : null;
-}
-
-export function getAdminSessionToken() {
-  return getAdminSessionSecret();
+  // Always run scrypt so response time does not reveal whether the email exists.
+  const isValid = await verifyPassword(
+    password,
+    admin?.passwordHash ?? DUMMY_PASSWORD_HASH,
+    admin?.passwordSalt ?? DUMMY_PASSWORD_SALT,
+  );
+  if (!admin || !admin.isActive || !admin.isSuperAdmin || !isValid) return null;
+  return admin;
 }
 
 async function getAuthorizedAdminFromToken(token: string) {

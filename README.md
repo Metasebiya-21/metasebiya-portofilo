@@ -30,6 +30,9 @@ cp .env.example .env.local
 GEMINI_API_KEY=your_key_here
 GEMINI_MODEL=gemini-2.5-flash
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/portfolio?schema=public
+# Direct (non-pooled) connection used by Prisma migrations. Same as DATABASE_URL locally;
+# on Supabase use the direct connection string. `npm run db:setup` defaults it to DATABASE_URL.
+DIRECT_URL=postgresql://postgres:postgres@localhost:5432/portfolio?schema=public
 REDIS_URL=redis://localhost:6379
 # Optional for Supabase deployments (use as DATABASE_URL or copy value into DATABASE_URL)
 SUPABASE_DATABASE_URL=
@@ -37,10 +40,9 @@ SUPABASE_DATABASE_URL=
 CLOUDFLARE_ACCOUNT_ID=
 CLOUDFLARE_KV_NAMESPACE_ID=
 CLOUDFLARE_API_TOKEN=
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=change_me
-SUPERADMIN_EMAIL=admin@example.com
-SUPERADMIN_PASSWORD=change_me
+# Required to create the first admin. The seed refuses passwords shorter than 12 characters.
+SUPERADMIN_EMAIL=you@example.com
+SUPERADMIN_PASSWORD=use_a_long_unique_password
 ADMIN_SESSION_TOKEN=replace_with_long_random_secret
 ```
 

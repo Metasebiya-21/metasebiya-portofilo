@@ -28,9 +28,9 @@ export const siteContent = {
   },
   contact: {
     title: "Contact",
-    subtitle: "Reach me at",
+    subtitle: "Reach me by email, LinkedIn, or GitHub, or send a message below.",
     links: {
-      email: "Gmail",
+      email: "Email",
       linkedin: "LinkedIn",
       github: "GitHub",
     },
@@ -63,12 +63,12 @@ export const siteContent = {
   },
   interactive: {
     skills: {
-      tipIdle: "Tip: choose any skill to highlight your current focus.",
+      tipIdle: "Tip: choose any skill to see how I use it.",
       emphasisPrefix: "Current emphasis:",
     },
     accordion: {
-      open: "Open",
-      closed: "Closed",
+      open: "Hide",
+      closed: "Show",
     },
   },
 };

@@ -1,10 +1,11 @@
 import { getProfileData } from "@/lib/portfolio-store";
+import Icon from "@/components/Icon";
 
 export default async function Footer() {
   const profile = await getProfileData();
 
   return (
-    <footer className="mt-16 border-t border-gray-200 dark:border-gray-800 py-10 text-sm text-gray-500">
+    <footer className="mt-16 border-t border-gray-200 dark:border-gray-800 py-10 text-sm text-gray-500 dark:text-gray-400">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p>© {new Date().getFullYear()} {profile.name}</p>
@@ -13,11 +14,11 @@ export default async function Footer() {
         <div className="flex items-center gap-4 text-lg">
           <a
             href={`mailto:${profile.email}`}
-            aria-label="Gmail"
-            title="Gmail"
+            aria-label="Email"
+            title="Email"
             className="transition hover:text-sky-600"
           >
-            <i className="fa-solid fa-envelope" />
+            <Icon name="envelope" />
           </a>
           <a
             href={profile.linkedin}
@@ -27,7 +28,7 @@ export default async function Footer() {
             title="LinkedIn"
             className="transition hover:text-sky-600"
           >
-            <i className="fa-brands fa-linkedin" />
+            <Icon name="linkedin" />
           </a>
           {profile.github && (
             <a
@@ -38,7 +39,7 @@ export default async function Footer() {
               title="GitHub"
               className="transition hover:text-sky-600"
             >
-              <i className="fa-brands fa-github" />
+              <Icon name="github" />
             </a>
           )}
           <a
@@ -47,7 +48,7 @@ export default async function Footer() {
             title="Resume"
             className="transition hover:text-sky-600"
           >
-            <i className="fa-solid fa-file-lines" />
+            <Icon name="file" />
           </a>
         </div>
       </div>

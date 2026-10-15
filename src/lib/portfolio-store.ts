@@ -25,6 +25,7 @@ const PROJECTS_CACHE_KEY = "portfolio:projects";
 const SKILLS_CACHE_KEY = "portfolio:skills";
 const SKILL_DETAILS_CACHE_KEY = "portfolio:skill-details";
 const CACHE_TTL_SECONDS = 300;
+export const PORTFOLIO_CACHE_TAG = "portfolio";
 
 function asStringArray(value: unknown) {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
@@ -32,20 +33,20 @@ function asStringArray(value: unknown) {
 
 function normalizeProfileData(profile: Partial<ProfileData>): ProfileData {
   return {
-    name: profile.name ?? fallbackProfile.name,
-    brandName: profile.brandName ?? fallbackProfile.brandName,
-    role: profile.role ?? fallbackProfile.role,
-    niche: profile.niche ?? fallbackProfile.niche,
-    headline: profile.headline ?? fallbackProfile.headline,
-    location: profile.location ?? fallbackProfile.location,
-    email: profile.email ?? fallbackProfile.email,
-    linkedin: profile.linkedin ?? fallbackProfile.linkedin,
-    github: profile.github ?? fallbackProfile.github,
-    website: profile.website ?? fallbackProfile.website,
-    resumeUrl: profile.resumeUrl ?? fallbackProfile.resumeUrl,
-    availability: profile.availability ?? fallbackProfile.availability,
-    contactIntro: profile.contactIntro ?? fallbackProfile.contactIntro,
-    summary: profile.summary ?? fallbackProfile.summary,
+    name: profile.name || fallbackProfile.name,
+    brandName: profile.brandName || fallbackProfile.brandName,
+    role: profile.role || fallbackProfile.role,
+    niche: profile.niche || fallbackProfile.niche,
+    headline: profile.headline || fallbackProfile.headline,
+    location: profile.location || fallbackProfile.location,
+    email: profile.email || fallbackProfile.email,
+    linkedin: profile.linkedin || fallbackProfile.linkedin,
+    github: profile.github || fallbackProfile.github,
+    website: profile.website || fallbackProfile.website,
+    resumeUrl: profile.resumeUrl || fallbackProfile.resumeUrl,
+    availability: profile.availability || fallbackProfile.availability,
+    contactIntro: profile.contactIntro || fallbackProfile.contactIntro,
+    summary: profile.summary || fallbackProfile.summary,
     impactMetrics: profile.impactMetrics ?? fallbackProfile.impactMetrics,
     trustSignals: profile.trustSignals ?? fallbackProfile.trustSignals,
     clientLogos: profile.clientLogos ?? fallbackProfile.clientLogos,
@@ -315,22 +316,27 @@ async function getSkillDetailsDataUncached(): Promise<SkillDetailData[]> {
 
 export const getProfileData = unstable_cache(getProfileDataUncached, ["portfolio:profile"], {
   revalidate: CACHE_TTL_SECONDS,
+  tags: [PORTFOLIO_CACHE_TAG],
 });
 
 export const getExperiencesData = unstable_cache(getExperiencesDataUncached, ["portfolio:experiences"], {
   revalidate: CACHE_TTL_SECONDS,
+  tags: [PORTFOLIO_CACHE_TAG],
 });
 
 export const getProjectsData = unstable_cache(getProjectsDataUncached, ["portfolio:projects"], {
   revalidate: CACHE_TTL_SECONDS,
+  tags: [PORTFOLIO_CACHE_TAG],
 });
 
 export const getSkillGroupsData = unstable_cache(getSkillGroupsDataUncached, ["portfolio:skills"], {
   revalidate: CACHE_TTL_SECONDS,
+  tags: [PORTFOLIO_CACHE_TAG],
 });
 
 export const getSkillDetailsData = unstable_cache(getSkillDetailsDataUncached, ["portfolio:skill-details"], {
   revalidate: CACHE_TTL_SECONDS,
+  tags: [PORTFOLIO_CACHE_TAG],
 });
 
 export async function getProjectById(id: number) {

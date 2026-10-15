@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 
 type Body = {
   projectId?: number;
@@ -8,16 +9,16 @@ type Body = {
   sessionId?: string;
 };
 
-function getClientIp(request: Request) {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]?.trim() || null;
-  return request.headers.get("x-real-ip");
-}
+const text = (value: unknown, max: number) => (typeof value === "string" ? value.trim().slice(0, max) : "");
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  if (!(await rateLimit(`click:${ip}`, 30, 60))) return NextResponse.json({ ok: true });
+
   const body = (await request.json().catch(() => ({}))) as Body;
-  const projectTitle = body.projectTitle?.trim();
-  const sessionId = body.sessionId?.trim() || "anonymous";
+  const projectTitle = text(body.projectTitle, 200);
+  const sessionId = text(body.sessionId, 64) || "anonymous";
+  const projectId = Number.isInteger(body.projectId) && Number(body.projectId) > 0 ? Number(body.projectId) : null;
 
   if (!projectTitle) {
     return NextResponse.json({ error: "projectTitle is required." }, { status: 400 });
@@ -26,11 +27,11 @@ export async function POST(request: Request) {
   try {
     await prisma.projectClick.create({
       data: {
-        projectId: body.projectId || null,
+        projectId,
         projectTitle,
-        projectLink: body.projectLink || null,
+        projectLink: text(body.projectLink, 500) || null,
         sessionId,
-        ip: getClientIp(request),
+        ip,
         country: request.headers.get("x-vercel-ip-country"),
       },
     });

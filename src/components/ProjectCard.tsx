@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { getOrCreateSessionId } from "@/lib/client-session";
+import { getProjectLinkLabel } from "@/lib/link-label";
 
 type Project = {
   id: number;
@@ -36,18 +38,6 @@ function getJustificationBullets(detail?: {
 
 const VISITOR_SESSION_KEY = "portfolio_visitor_session_id";
 
-function getVisitorSessionId() {
-  if (typeof window === "undefined") return "anonymous";
-  const saved = window.localStorage.getItem(VISITOR_SESSION_KEY);
-  if (saved) return saved;
-  const generated =
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  window.localStorage.setItem(VISITOR_SESSION_KEY, generated);
-  return generated;
-}
-
 export default function ProjectCard({ id, title, category, summary, tags, link, skillDetails }: Project) {
   const [selectedTag, setSelectedTag] = useState("");
   const trackClick = () => {
@@ -59,7 +49,7 @@ export default function ProjectCard({ id, title, category, summary, tags, link, 
         projectId: id,
         projectTitle: title,
         projectLink: link,
-        sessionId: getVisitorSessionId(),
+        sessionId: getOrCreateSessionId(VISITOR_SESSION_KEY),
       }),
     });
   };
@@ -117,7 +107,7 @@ export default function ProjectCard({ id, title, category, summary, tags, link, 
             onClick={trackClick}
             className="text-sm font-medium text-sky-600 hover:underline"
           >
-            Open Git URL
+            {getProjectLinkLabel(link)}
           </a>
         </div>
       )}

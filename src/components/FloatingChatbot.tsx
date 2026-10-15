@@ -2,6 +2,8 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { siteContent } from "@/content/site";
+import Icon from "@/components/Icon";
+import { getOrCreateSessionId } from "@/lib/client-session";
 
 type Message = {
   role: "user" | "assistant";
@@ -22,29 +24,8 @@ export default function FloatingChatbot() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const normalizeChatError = (raw: string) => {
-    if (raw.includes("Invalid GEMINI_API_KEY") || raw.includes("API_KEY_INVALID")) {
-      return "Chatbot is not configured with a valid Gemini API key yet. Please update GEMINI_API_KEY.";
-    }
-    if (raw.includes("Missing GEMINI_API_KEY")) {
-      return "Chatbot is missing GEMINI_API_KEY. Add it to your environment and restart the app.";
-    }
-    return raw || content.error;
-  };
-
   useEffect(() => {
-    const savedSessionId = window.localStorage.getItem(CHAT_SESSION_KEY);
-    if (savedSessionId) {
-      setSessionId(savedSessionId);
-      return;
-    }
-
-    const generatedSessionId =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    window.localStorage.setItem(CHAT_SESSION_KEY, generatedSessionId);
-    setSessionId(generatedSessionId);
+    setSessionId(getOrCreateSessionId(CHAT_SESSION_KEY));
   }, []);
 
   useEffect(() => {
@@ -82,16 +63,15 @@ export default function FloatingChatbot() {
         }),
       });
 
+      const data = (await response.json().catch(() => ({}))) as { reply?: string; error?: string };
       if (!response.ok) {
-        const data = (await response.json()) as { error?: string };
-        throw new Error(normalizeChatError(data.error || content.error));
+        throw new Error(data.error || content.error);
       }
 
-      const data = (await response.json()) as { reply?: string };
       setMessages([...nextMessages, { role: "assistant", content: data.reply || content.error }]);
     } catch (submitError) {
       const messageText = submitError instanceof Error ? submitError.message : content.error;
-      setError(normalizeChatError(messageText));
+      setError(messageText || content.error);
       setMessages([
         ...nextMessages,
         {
@@ -107,7 +87,7 @@ export default function FloatingChatbot() {
   return (
     <div ref={containerRef} className="pointer-events-none fixed inset-0 z-[60]">
       {isOpen && (
-        <section className="pointer-events-auto fixed bottom-20 right-6 w-[min(24rem,calc(100vw-2rem))] rounded-2xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+        <section className="pointer-events-auto fixed bottom-20 right-6 flex max-h-[calc(100dvh-6rem)] w-[min(24rem,calc(100vw-2rem))] flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-semibold">{content.title}</h2>
@@ -119,11 +99,14 @@ export default function FloatingChatbot() {
               className="rounded-md p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
               aria-label="Close chat"
             >
-              <i className="fa-solid fa-xmark" />
+              <Icon name="xmark" />
             </button>
           </div>
 
-          <div className="mt-3 h-72 space-y-3 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-950">
+          <div
+            role="log"
+            aria-live="polite"
+            className="mt-3 h-72 min-h-0 shrink space-y-3 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-950">
             {messages.map((messageEntry, index) => (
               <div
                 key={`${messageEntry.role}-${index}`}
@@ -151,6 +134,8 @@ export default function FloatingChatbot() {
               value={input}
               onChange={(event) => setInput(event.target.value)}
               placeholder={content.placeholder}
+              aria-label={content.placeholder}
+              maxLength={1000}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none ring-sky-500 transition focus:ring-2 dark:border-gray-700 dark:bg-gray-950"
               disabled={isLoading}
             />
@@ -172,7 +157,7 @@ export default function FloatingChatbot() {
         aria-label={isOpen ? "Close chatbot" : "Open chatbot"}
         title={isOpen ? "Close chatbot" : "Open chatbot"}
       >
-        <i className="fa-solid fa-comments" />
+        <Icon name="comments" />
       </button>
     </div>
   );

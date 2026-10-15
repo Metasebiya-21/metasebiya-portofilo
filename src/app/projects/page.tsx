@@ -38,7 +38,9 @@ export default async function ProjectsPage({
     acc[project.category].push(project);
     return acc;
   }, {});
-  const categories = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
+  const groupedCategories = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
+  // Filter chips list every category so visitors can switch directly between them.
+  const categories = Array.from(new Set(projects.map((project) => project.category))).sort((a, b) => a.localeCompare(b));
 
   return (
     <>
@@ -79,7 +81,7 @@ export default async function ProjectsPage({
           </p>
         )}
         <div className="space-y-8">
-          {categories.map((category) => (
+          {groupedCategories.map((category) => (
             <section key={category}>
               <h2 className="mb-3 text-xl font-semibold">{category}</h2>
               <div className="project-grid grid sm:grid-cols-2 gap-4">
@@ -89,7 +91,7 @@ export default async function ProjectsPage({
               </div>
             </section>
           ))}
-          {!categories.length && (
+          {!groupedCategories.length && (
             <p className="rounded-xl border border-dashed border-slate-300 p-6 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
               No projects available for this filter.
             </p>

@@ -26,9 +26,6 @@ export const metadata: Metadata = {
     "Portfolio",
     "Next.js",
   ],
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     title: `${profile.name} | Backend, Data, and AI Engineer`,
     description: profile.headline,
@@ -71,20 +68,19 @@ export default function RootLayout({ children }: { readonly children: React.Reac
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-        />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema).replace(/</g, "\\u003c") }}
         />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                const savedTheme = localStorage.getItem("theme");
-                const isDark = savedTheme === "dark";
+                var savedTheme = null;
+                try { savedTheme = localStorage.getItem("theme"); } catch (e) {}
+                var isDark = savedTheme
+                  ? savedTheme === "dark"
+                  : window.matchMedia("(prefers-color-scheme: dark)").matches;
                 document.documentElement.classList.toggle("dark", isDark);
               })();
             `,

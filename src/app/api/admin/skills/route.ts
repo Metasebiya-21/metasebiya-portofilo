@@ -64,8 +64,6 @@ export async function PUT(request: NextRequest) {
     data: {
       name,
       categoryId,
-      description: null,
-      howIUseIt: null,
       technicalUse: normalizeJustifications(body.justifications).join("\n") || null,
     },
   });
@@ -79,6 +77,6 @@ export async function DELETE(request: NextRequest) {
   if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
 
   await prisma.techStack.delete({ where: { id } });
-  await invalidatePortfolioCache({ skills: true });
+  await invalidatePortfolioCache({ skills: true, projects: true, experiences: true });
   return NextResponse.json({ ok: true });
 }

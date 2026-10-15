@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { invalidatePortfolioCache } from "@/lib/portfolio-cache";
+import { asStrings, nextSortOrder } from "@/lib/admin-api";
 
 type ExperienceBody = {
   id?: number;
@@ -13,9 +14,27 @@ type ExperienceBody = {
   visibleToPublic?: boolean;
 };
 
+function parseBody(raw: unknown): ExperienceBody | null {
+  if (!raw || typeof raw !== "object") return null;
+  const body = raw as Record<string, unknown>;
+  const title = typeof body.title === "string" ? body.title.trim() : "";
+  const role = typeof body.role === "string" ? body.role.trim() : "";
+  if (!title || !role) return null;
+  return {
+    id: typeof body.id === "number" ? body.id : undefined,
+    title,
+    role,
+    period: typeof body.period === "string" ? body.period.trim() : "",
+    bullets: asStrings(body.bullets).map((item) => item.trim()).filter(Boolean),
+    techStacks: asStrings(body.techStacks),
+    visibleToPublic: typeof body.visibleToPublic === "boolean" ? body.visibleToPublic : undefined,
+  };
+}
+
 export async function POST(request: NextRequest) {
   if (!(await isAdminRequest(request))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const body = (await request.json()) as ExperienceBody;
+  const body = parseBody(await request.json().catch(() => null));
+  if (!body) return NextResponse.json({ error: "title and role are required" }, { status: 400 });
 
   const techNames = (body.techStacks ?? []).map((name) => name.trim()).filter(Boolean);
   if (techNames.length) {
@@ -36,7 +55,7 @@ export async function POST(request: NextRequest) {
       period: body.period,
       bullets: body.bullets,
       visibleToPublic: body.visibleToPublic ?? true,
-      sortOrder: Date.now(),
+      sortOrder: await nextSortOrder("experience"),
       techStackLinks: {
         create: techRows.map((tech) => ({ techStackId: tech.id })),
       },
@@ -48,7 +67,8 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   if (!(await isAdminRequest(request))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const body = (await request.json()) as ExperienceBody;
+  const body = parseBody(await request.json().catch(() => null));
+  if (!body) return NextResponse.json({ error: "title and role are required" }, { status: 400 });
   if (!body.id) return NextResponse.json({ error: "id is required" }, { status: 400 });
 
   const techNames = (body.techStacks ?? []).map((name) => name.trim()).filter(Boolean);

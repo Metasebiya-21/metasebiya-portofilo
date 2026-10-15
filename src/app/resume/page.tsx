@@ -2,9 +2,12 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getProfileData, getExperiencesData } from "@/lib/portfolio-store";
 import PublicResumeViewer from "@/components/PublicResumeViewer";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "Resume | Metasebiya",
+export const metadata: Metadata = {
+  title: "Resume",
+  description: "Resume of Metasebiya Mulugeta: backend, data, and applied AI engineering experience.",
+  alternates: { canonical: "/resume" },
 };
 
 export default async function ResumePage() {
@@ -14,12 +17,12 @@ export default async function ResumePage() {
   ]);
 
   return (
-    <div className="flex min-h-screen flex-col font-sans">
+    <>
       <Header />
-      <main className="flex-1 w-full px-4 py-8 pt-24 max-w-5xl mx-auto flex items-start justify-center">
+      <main className="mt-8 flex w-full items-start justify-center">
         <PublicResumeViewer profile={profile} experiences={experiences} />
       </main>
       <Footer />
-    </div>
+    </>
   );
 }

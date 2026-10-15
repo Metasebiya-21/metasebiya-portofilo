@@ -1,5 +1,6 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { getCacheClient } from "@/lib/cache";
+import { PORTFOLIO_CACHE_TAG } from "@/lib/portfolio-store";
 
 const PROFILE_CACHE_KEY = "portfolio:profile";
 const EXPERIENCES_CACHE_KEY = "portfolio:experiences";
@@ -30,9 +31,10 @@ export async function invalidatePortfolioCache(options?: { profile?: boolean; ex
     }
   }
 
-  // Revalidate pages that read portfolio content via unstable_cache.
-  if (profile || projects || experiences || skills) revalidatePath("/");
-  if (projects) revalidatePath("/projects");
-  if (experiences) revalidatePath("/experience");
-  if (skills) revalidatePath("/about");
+  // Portfolio data feeds every public page (detail pages, resume, chat context),
+  // so expire all unstable_cache entries and re-render the whole site.
+  if (profile || projects || experiences || skills) {
+    revalidateTag(PORTFOLIO_CACHE_TAG, { expire: 0 });
+    revalidatePath("/", "layout");
+  }
 }

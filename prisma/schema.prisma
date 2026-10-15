@@ -139,6 +139,8 @@ model TechStack {
   category        Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   projectLinks    ProjectTech[]
   experienceLinks ExperienceTech[]
+
+  @@index([categoryId])
 }
 
 model ProjectTech {

@@ -4,6 +4,15 @@ import { spawnSync } from "node:child_process";
 import { readdirSync } from "node:fs";
 
 const args = process.argv.slice(2);
+
+// schema.prisma reads DIRECT_URL for migrations; default it to DATABASE_URL so
+// plain local setups (no connection pooler) work without extra configuration.
+if (!process.env.DATABASE_URL && process.env.SUPABASE_DATABASE_URL) {
+  process.env.DATABASE_URL = process.env.SUPABASE_DATABASE_URL;
+}
+if (!process.env.DIRECT_URL && process.env.DATABASE_URL) {
+  process.env.DIRECT_URL = process.env.DATABASE_URL;
+}
 const reset = args.includes("--reset");
 
 function run(command, args) {

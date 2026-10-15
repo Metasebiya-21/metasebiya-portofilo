@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { saveAs } from "file-saver";
+import DOMPurify from "dompurify";
+
+// Generated HTML is model output influenced by a pasted job description, so treat it as untrusted.
+const sanitize = (html: unknown) =>
+  typeof html === "string" ? DOMPurify.sanitize(html, { USE_PROFILES: { html: true } }) : "";
 
 export default function ResumeBuilderClient() {
   const [jobDescription, setJobDescription] = useState("");
@@ -23,10 +28,10 @@ export default function ResumeBuilderClient() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
-      setResumeHtml(data.resumeHtml);
-      setCoverLetterHtml(data.coverLetterHtml);
-    } catch (err: any) {
-      setError(err.message);
+      setResumeHtml(sanitize(data.resumeHtml));
+      setCoverLetterHtml(sanitize(data.coverLetterHtml));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Generation failed");
     } finally {
       setLoading(false);
     }
@@ -42,9 +47,9 @@ export default function ResumeBuilderClient() {
       filename:     activeTab === "resume" ? "Resume.pdf" : "Cover_Letter.pdf",
       image:        { type: "jpeg", quality: 0.98 },
       html2canvas:  { scale: 2 },
-      jsPDF:        { unit: "in", format: "letter", orientation: "portrait" }
-    };
-    html2pdf().set(opt as any).from(element).save();
+      jsPDF:        { unit: "in", format: "letter", orientation: "portrait" },
+    } as const;
+    html2pdf().set(opt).from(element).save();
   }
 
   async function handleDownloadDocx() {

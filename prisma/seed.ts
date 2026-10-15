@@ -38,14 +38,14 @@ async function main() {
   const superAdminEmail = (
     process.env.SUPERADMIN_EMAIL ||
     process.env.ADMIN_EMAIL ||
-    "admin@example.com"
+    ""
   )
     .trim()
     .toLowerCase();
   const superAdminPassword = (
     process.env.SUPERADMIN_PASSWORD ||
     process.env.ADMIN_PASSWORD ||
-    "change_me"
+    ""
   ).trim();
 
   const existingProfile = await prisma.profile.findUnique({ where: { id: 1 } });
@@ -55,8 +55,17 @@ async function main() {
     prisma.category.count(),
     prisma.techStack.count(),
     prisma.techStack.count({ where: { categoryId: { not: null } } }),
-    prisma.adminUser.findUnique({ where: { email: superAdminEmail } }),
+    superAdminEmail
+      ? prisma.adminUser.findUnique({ where: { email: superAdminEmail } })
+      : prisma.adminUser.findFirst({ where: { isSuperAdmin: true } }),
   ]);
+
+  // Never create an admin account with guessable default credentials.
+  if (!superAdmin && (!superAdminEmail || superAdminPassword.length < 12 || superAdminPassword === "change_me")) {
+    throw new Error(
+      "Set SUPERADMIN_EMAIL and a strong SUPERADMIN_PASSWORD (at least 12 characters) before seeding.",
+    );
+  }
 
   if (
     existingProfile &&
@@ -74,19 +83,8 @@ async function main() {
   await prisma.$transaction(async (tx) => {
     await tx.profile.upsert({
       where: { id: 1 },
-      update: {
-        name: profile.name,
-        brandName: profile.brandName,
-        role: profile.role,
-        headline: profile.headline,
-        location: profile.location,
-        email: profile.email,
-        linkedin: profile.linkedin,
-        github: profile.github,
-        website: profile.website,
-        contactIntro: profile.contactIntro,
-        summary: profile.summary,
-      },
+      // Keep profile edits made in the admin dashboard when the seed re-runs.
+      update: {},
       create: {
         id: 1,
         name: profile.name,
@@ -238,7 +236,7 @@ async function main() {
       console.log(`Seed created superadmin user: ${superAdminEmail}`);
     } else {
       await tx.adminUser.update({
-        where: { email: superAdminEmail },
+        where: { id: superAdmin.id },
         data: {
           isSuperAdmin: true,
           isActive: true,

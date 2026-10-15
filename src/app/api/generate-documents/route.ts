@@ -28,9 +28,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const jobDescription = body.jobDescription?.trim();
+  const jobDescription = typeof body.jobDescription === "string" ? body.jobDescription.trim() : "";
   if (!jobDescription) {
     return NextResponse.json({ error: "jobDescription is required." }, { status: 400 });
+  }
+  if (jobDescription.length > 20_000) {
+    return NextResponse.json({ error: "Job description is too long (max 20,000 characters)." }, { status: 413 });
   }
 
   const [profile, experiences, projects, skillGroups] = await Promise.all([
@@ -95,19 +98,22 @@ Instructions:
       ? response.content.trim() 
       : response.content.map(p => "text" in p ? p.text : "").join("").trim();
       
-    // Strip markdown formatting if Gemini included it
-    const cleanJson = text.replace(/^```json/g, "").replace(/^```/g, "").replace(/```$/g, "").trim();
-    
-    let result;
+    // Gemini sometimes wraps the JSON in markdown fences or prose; take the outermost object.
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    let result: { resumeHtml?: unknown; coverLetterHtml?: unknown };
     try {
-      result = JSON.parse(cleanJson);
+      result = JSON.parse(start >= 0 && end > start ? text.slice(start, end + 1) : text);
     } catch {
-      throw new Error(`AI did not return valid JSON. Snippet: ${cleanJson.substring(0, 100)}...`);
+      return NextResponse.json({ error: "The AI response was not valid JSON. Please try again." }, { status: 502 });
     }
-    
-    return NextResponse.json(result);
+
+    return NextResponse.json({
+      resumeHtml: typeof result.resumeHtml === "string" ? result.resumeHtml : "",
+      coverLetterHtml: typeof result.coverLetterHtml === "string" ? result.coverLetterHtml : "",
+    });
   } catch (error) {
-    const detail = error instanceof Error ? error.message : "Failure";
-    return NextResponse.json({ error: `Failed to generate documents: ${detail}` }, { status: 500 });
+    console.error("[generate-documents] failed", error);
+    return NextResponse.json({ error: "Failed to generate documents. Please try again." }, { status: 500 });
   }
 }

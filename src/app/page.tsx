@@ -8,6 +8,12 @@ import Link from "next/link";
 import { getProfileData, getProjectsData, getSkillDetailsData, getSkillGroupsData } from "@/lib/portfolio-store";
 import { aboutContent } from "@/content/about";
 import { siteContent } from "@/content/site";
+import Icon from "@/components/Icon";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default async function HomePage() {
   const [profile, projects, skillGroups, skillDetails] = await Promise.all([
@@ -60,7 +66,7 @@ export default async function HomePage() {
               title={siteContent.home.contactLinks.email}
               className="transition hover:text-sky-600"
             >
-              <i className="fa-solid fa-envelope" />
+              <Icon name="envelope" />
             </a>
             <a
               href={profile.linkedin}
@@ -70,7 +76,7 @@ export default async function HomePage() {
               title={siteContent.home.contactLinks.linkedin}
               className="transition hover:text-sky-600"
             >
-              <i className="fa-brands fa-linkedin" />
+              <Icon name="linkedin" />
             </a>
             {profile.github && (
               <a
@@ -81,7 +87,7 @@ export default async function HomePage() {
                 title={siteContent.home.contactLinks.github}
                 className="transition hover:text-sky-600"
               >
-                <i className="fa-brands fa-github" />
+                <Icon name="github" />
               </a>
             )}
           </div>
@@ -95,7 +101,7 @@ export default async function HomePage() {
                 className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70"
               >
                 <p className="text-2xl font-bold text-sky-700 dark:text-sky-300">{metric.value}</p>
-                <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">{metric.label}</p>
+                <p className="mt-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{metric.label}</p>
               </article>
             ))}
           </div>

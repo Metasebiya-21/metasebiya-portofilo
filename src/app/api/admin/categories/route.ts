@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     create: { name },
   });
 
-  await invalidatePortfolioCache({ projects: true });
+  await invalidatePortfolioCache({ projects: true, skills: true });
   return NextResponse.json({ ok: true });
 }
 
@@ -45,7 +45,7 @@ export async function PUT(request: NextRequest) {
     data: { name },
   });
 
-  await invalidatePortfolioCache({ projects: true });
+  await invalidatePortfolioCache({ projects: true, skills: true });
   return NextResponse.json({ ok: true });
 }
 
@@ -64,6 +64,6 @@ export async function DELETE(request: NextRequest) {
   }
 
   await prisma.category.delete({ where: { id } });
-  await invalidatePortfolioCache({ projects: true });
+  await invalidatePortfolioCache({ projects: true, skills: true });
   return NextResponse.json({ ok: true });
 }

@@ -6,6 +6,7 @@ import { profile as fallbackProfile } from "@/content/profile";
 import { projects as fallbackProjects } from "@/content/projects";
 import { getCacheClient } from "@/lib/cache";
 import { prisma } from "@/lib/prisma";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { getExperiencesData, getProfileData, getProjectsData, getSkillGroupsData } from "@/lib/portfolio-store";
 
 export const runtime = "nodejs";
@@ -23,6 +24,8 @@ type StoredMessage = {
 const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 const apiKey = process.env.GEMINI_API_KEY;
 const MAX_MEMORY_MESSAGES = 20;
+const MAX_MESSAGE_CHARS = 1000;
+const SESSION_ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
 const CHAT_CACHE_TTL_SECONDS = 1800;
 
 const getChatCacheKey = (sessionId: string) => `chat:session:${sessionId}:messages`;
@@ -42,11 +45,17 @@ async function loadSessionHistory(sessionId: string): Promise<StoredMessage[]> {
     }
   }
 
-  const rows = await prisma.chatMessage.findMany({
-    where: { sessionId },
-    orderBy: { createdAt: "desc" },
-    take: MAX_MEMORY_MESSAGES,
-  });
+  let rows: { role: string; content: string }[] = [];
+  try {
+    rows = await prisma.chatMessage.findMany({
+      where: { sessionId },
+      orderBy: { createdAt: "desc" },
+      take: MAX_MEMORY_MESSAGES,
+    });
+  } catch {
+    // Chat still works without stored memory when the database is unavailable.
+    return [];
+  }
 
   const history = rows
     .reverse()
@@ -116,7 +125,7 @@ ${portfolioContext}
 export async function POST(request: Request) {
   if (!apiKey) {
     return NextResponse.json(
-      { error: "Missing GEMINI_API_KEY. Add it to your environment variables." },
+      { error: "The assistant is not configured yet. Please use the contact page instead." },
       { status: 500 },
     );
   }
@@ -128,14 +137,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const message = body.message?.trim();
+  const message = typeof body.message === "string" ? body.message.trim() : "";
   if (!message) {
     return NextResponse.json({ error: "Message is required." }, { status: 400 });
   }
+  if (message.length > MAX_MESSAGE_CHARS) {
+    return NextResponse.json({ error: `Please keep messages under ${MAX_MESSAGE_CHARS} characters.` }, { status: 413 });
+  }
 
-  const sessionId = body.sessionId?.trim();
-  if (!sessionId) {
-    return NextResponse.json({ error: "sessionId is required." }, { status: 400 });
+  const sessionId = typeof body.sessionId === "string" ? body.sessionId.trim() : "";
+  if (!SESSION_ID_PATTERN.test(sessionId)) {
+    return NextResponse.json({ error: "Invalid sessionId." }, { status: 400 });
+  }
+
+  const ip = getClientIp(request);
+  const allowed = (await rateLimit(`chat:ip:${ip}`, 10, 60)) && (await rateLimit(`chat:day:${ip}`, 200, 86_400));
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many messages. Please wait a minute and try again." }, { status: 429 });
   }
 
   const [profile, experiences, projects, skillGroups] = await Promise.all([
@@ -150,6 +168,7 @@ export async function POST(request: Request) {
     model,
     apiKey,
     temperature: 0.4,
+    maxOutputTokens: 1024,
   });
 
   try {
@@ -172,20 +191,25 @@ export async function POST(request: Request) {
             .trim();
     const reply = text || "I could not generate a response. Please try again.";
 
-    await prisma.$transaction(async (tx) => {
-      await tx.chatSession.upsert({
-        where: { id: sessionId },
-        update: {},
-        create: { id: sessionId },
-      });
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.chatSession.upsert({
+          where: { id: sessionId },
+          update: {},
+          create: { id: sessionId },
+        });
 
-      await tx.chatMessage.createMany({
-        data: [
-          { sessionId, role: "user", content: message },
-          { sessionId, role: "assistant", content: reply },
-        ],
+        await tx.chatMessage.createMany({
+          data: [
+            { sessionId, role: "user", content: message },
+            { sessionId, role: "assistant", content: reply },
+          ],
+        });
       });
-    });
+    } catch (error) {
+      // Persisting is best-effort; still return the reply the visitor asked for.
+      console.error("[chat] failed to persist messages", error);
+    }
 
     await cacheSessionHistory(sessionId, [
       ...history,
@@ -195,13 +219,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ reply });
   } catch (error) {
-    const detail = error instanceof Error ? error.message : "Unknown LangChain/Gemini error.";
-    if (detail.includes("API_KEY_INVALID")) {
-      return NextResponse.json(
-        { error: "Invalid GEMINI_API_KEY. Update it in .env.local and restart the Next.js container." },
-        { status: 500 },
-      );
-    }
-    return NextResponse.json({ error: `Failed to generate response: ${detail}` }, { status: 500 });
+    console.error("[chat] failed to generate response", error);
+    return NextResponse.json({ error: "The assistant is unavailable right now. Please try again later." }, { status: 500 });
   }
 }
